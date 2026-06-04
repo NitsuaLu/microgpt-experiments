@@ -5,6 +5,34 @@ Some attempts, based on [microgpt](https://github.com/karpathy/makemore).
 
 ---
 
+## MicroGpt — 两个版本
+
+| 文件 | 说明 |
+|---|---|
+| `MicroGpt/microgpt_original.py` | Karpathy 原版，纯 Python 手写 autograd（`Value` 类）和 Adam 优化器 |
+| `MicroGpt/microgpt_pytorch.py` | PyTorch 迁移版，用 `torch.Tensor` + `torch.optim.Adam` 替代手写组件 |
+
+**核心差异：**
+
+| | 原版 | PyTorch 版 |
+|---|---|---|
+| 自动微分 | 手写 `Value` 类，构建计算图 | PyTorch autograd |
+| 线性层 | 嵌套循环 `sum(wi * xi ...)` | tensor 运算 `x @ w.T` |
+| 优化器 | 手写 Adam | `torch.optim.Adam` |
+
+> 注：`microgpt_original.py` 仅修改了数据集路径（`../input.txt` → `input.txt`），其余与 Karpathy 原版一致。`microgpt_pytorch.py` 是 PyTorch 迁移尝试的最初版本。
+
+### 快速开始
+
+```bash
+python MicroGpt/microgpt_original.py   # 纯 Python，零依赖
+python MicroGpt/microgpt_pytorch.py    # 需要 torch
+```
+
+数据集 `input.txt` 首次运行时会自动下载。
+
+---
+
 ## KV Cache Benchmark
 
 KV Cache 性能对比实验，比较 attention 计算在有无缓存下的复杂度差异（O(n) vs O(n²)）。
