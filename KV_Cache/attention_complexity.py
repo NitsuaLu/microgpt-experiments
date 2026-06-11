@@ -13,8 +13,8 @@ plt.rcParams.update({'figure.dpi': 150, 'font.size': 11})
 
 torch.manual_seed(42)
 
-d = 64                          # head dimension (like a real model)
-seq_lengths = [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+d = 128                         # head dimension (like a real model)
+seq_lengths = [16, 32, 64, 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192]
 n_warmup = 2                    # warmup runs before timing
 
 times_nocache = []              # total time for full sequence, no cache
