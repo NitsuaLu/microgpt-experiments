@@ -103,39 +103,40 @@ def gpt(token_id, pos_id, keys, values):
 
 # ── Training ─────────────────────────────────────────────
 num_steps = 1000
-accum_steps = 4
-optimizer = torch.optim.Adam(state_dict.values(), lr=1e-3)
-ema_loss = None
+learning_rate = 1e-3
+optimizer = torch.optim.Adam(state_dict.values(), lr=learning_rate)
+
+loss_window = []
 doc_idx = 0
 print("training...")
 for step in range(num_steps):
+    doc = docs[doc_idx % len(docs)]
+    doc_idx += 1
+    tokens = [BOS] + [uchars.index(ch) for ch in doc] + [BOS]
+    n = min(block_size, len(tokens) - 1)
+    keys = [[] for _ in range(n_layer)]
+    values = [[] for _ in range(n_layer)]
+
     optimizer.zero_grad()
-    accum_loss = 0
-    for micro_step in range(accum_steps):
-        doc = docs[doc_idx % len(docs)]
-        doc_idx += 1
-        tokens = [BOS] + [uchars.index(ch) for ch in doc] + [BOS]
-        n = min(block_size, len(tokens) - 1)
-        keys = [[] for _ in range(n_layer)]
-        values = [[] for _ in range(n_layer)]
-        losses = []
-        for pos_id in range(n):
-            token_id, target_id = tokens[pos_id], tokens[pos_id + 1]
-            logits = gpt(token_id, pos_id, keys, values)
-            probs = softmax(logits)
-            loss_t = -probs[target_id].log()
-            losses.append(loss_t)
-        loss = (1 / n) * sum(losses)
-        (loss / accum_steps).backward()
-        accum_loss += loss.data.item()
+    losses = []
+    for pos_id in range(n):
+        token_id, target_id = tokens[pos_id], tokens[pos_id + 1]
+        logits = gpt(token_id, pos_id, keys, values)
+        probs = softmax(logits)
+        loss_t = -probs[target_id].log()
+        losses.append(loss_t)
+    loss = (1 / n) * sum(losses)
+    loss.backward()
     optimizer.step()
-    avg_loss = accum_loss / accum_steps
-    if ema_loss is None:
-        ema_loss = avg_loss
+
+    loss_window.append(loss.data.item())
+
+    if (step + 1) % 100 == 0:
+        avg_loss = sum(loss_window) / len(loss_window)
+        print(f"  step {step+1:4d} / {num_steps:4d} | avg_loss {avg_loss:.4f}")
+        loss_window.clear()
     else:
-        ema_loss = 0.9 * ema_loss + 0.1 * avg_loss
-    if (step + 1) % 200 == 0 or step == 0:
-        print(f"  step {step+1:4d} / {num_steps:4d} | loss {avg_loss:.4f} | ema {ema_loss:.4f}")
+        print(f"  step {step+1:4d} / {num_steps:4d} | loss {loss.data:.4f}", end='\r')
 
 # ── Benchmark ─────────────────────────────────────────────
 temperature = 0.5
