@@ -68,3 +68,5 @@ python KV_Cache/microgpt_no_kv_cache.py
 
 - `attention_complexity.py` 的 log-log 图上，无缓存斜率为 2（O(n²)），有缓存斜率为 1（O(n)）
 - `microgpt_benchmark.py` 验证两个版本生成的名字完全一致，KV Cache 版本快 8-10 倍（取决于 block_size）
+
+![KV Cache: O(n) vs O(n²)](Figures/attention_complexity.png)
